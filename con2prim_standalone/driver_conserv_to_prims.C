@@ -197,7 +197,6 @@ extern "C" void IllinoisGRMHD_conserv_to_prims(CCTK_ARGUMENTS) {
         PRIMS[ww] = By[index];    ww++;
         PRIMS[ww] = Bz[index];    ww++;
 
-
 #ifndef ENABLE_STANDALONE_IGM_C2P_SOLVER_RANDOM_DATA
         CCTK_REAL CONSERVS[NUM_CONSERVS] = {rho_star[index], mhd_st_x[index],mhd_st_y[index],mhd_st_z[index],tau[index]};
 #if( USE_ENTROPY_EQUATION )
@@ -279,7 +278,6 @@ extern "C" void IllinoisGRMHD_conserv_to_prims(CCTK_ARGUMENTS) {
 #endif
 #endif
 
-
         //FIXME: might slow down the code.
 #if( !USE_ENTROPY_EQUATION )
         if(CCTK_isnan(CONSERVS[RHOSTAR]*CONSERVS[STILDEX]*CONSERVS[STILDEY]*CONSERVS[STILDEZ]*CONSERVS[TAUENERGY]*PRIMS[BX_CENTER]*PRIMS[BY_CENTER]*PRIMS[BZ_CENTER])) {
@@ -335,6 +333,47 @@ extern "C" void IllinoisGRMHD_conserv_to_prims(CCTK_ARGUMENTS) {
         CCTK_REAL Bz_orig   = PRIMS[ww]; ww++;
 #endif
 
+
+#ifdef WRITE_TEST_DATA
+	//Output data line
+	//CONSERVS[5]
+	outfile<<CONSERVS[0];for(int iout=1;iout<5;iout++)outfile<<","<<CONSERVS[iout];
+	//FLUIDPRIMS[5]
+	for(int iout=0;iout<5;iout++)outfile<<","<<PRIMS[iout];
+	//ADMMETRIC[10]
+	ww=0;
+	outfile<<","<<gxx[index];
+	outfile<<","<<gxy[index];
+	outfile<<","<<gxz[index];
+	outfile<<","<<gyy[index];
+	outfile<<","<<gyz[index];
+	outfile<<","<<gzz[index];
+	outfile<<","<<alp[index];
+	outfile<<","<<betax[index];
+	outfile<<","<<betay[index];
+	outfile<<","<<betaz[index];
+	//BFIELD[3]"
+	for(int iout=5;iout<8;iout++)outfile<<","<<PRIMS[iout];
+	//TMNUDN[10]
+	if( write_tmunudn ) for(int iout=0;iout<10;iout++)outfile<<","<<TDNMUNU[iout];
+	//TMNUUP[10]
+	if( write_tmunuup ) for(int iout=0;iout<10;iout++)outfile<<","<<TUPMUNU[iout];
+	//METRICBSSN[18]
+	if( write_bssn )  for(int iout=0;iout<NUMVARS_FOR_METRIC;iout++)outfile<<","<<METRIC[iout];
+	//METRIC4DN[10]
+	if( write_metric4dn )
+	  for(int iout=0;iout<4;iout++)
+	    for(int jout=iout;jout<4;jout++)
+	      outfile<<","<<g4dn[iout][jout];
+	//METRIC4UP[10]
+	if( write_metric4up )
+	  for(int iout=0;iout<4;iout++)
+	    for(int jout=iout;jout<4;jout++)
+	      outfile<<","<<g4up[iout][jout];
+	//could continue here [instead of continue?] to perform testing or to write reference prims
+	outfile<<endl;
+	continue;
+#endif
 
         int check=0;
         struct output_stats stats;
@@ -603,7 +642,8 @@ extern "C" void IllinoisGRMHD_conserv_to_prims(CCTK_ARGUMENTS) {
         failure_checker[index] = stats.failure_checker;
         n_iter += stats.n_iter;
       }
-
+#ifndef WRITE_TEST_DATA
+  
   if(CCTK_Equals(verbose, "essential") || CCTK_Equals(verbose, "essential+iteration output")) {
 #if( !USE_ENTROPY_EQUATION )
     CCTK_VInfo(CCTK_THORNSTRING,"C2P: Lev: %d NumPts= %d | Fixes: Font= %d VL= %d rho*= %d | Failures: %d InHoriz= %d / %d | Error: %.3e, ErrDenom: %.3e | %.2f iters/gridpt",
@@ -753,6 +793,8 @@ extern "C" void IllinoisGRMHD_conserv_to_prims(CCTK_ARGUMENTS) {
     std::exit(1);
 #endif
   }
+
+#endif
 
 #ifdef ENABLE_STANDALONE_IGM_C2P_SOLVER
   return 0; // int main() requires an integer be returned

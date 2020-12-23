@@ -33,11 +33,13 @@ EXECUTABLE = con2prim_random_input
 .PHONY: all clean
 
 # All: default target
-all: $(EXECUTABLE)
+all: $(EXECUTABLE) con2prim_random_data
 
-# Compile the standalone
+# Compile the standalone variants
 $(EXECUTABLE): $(SRC) $(INC)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $@
+con2prim_random_data: $(SRC) $(INC)
+	$(CXX) $(CXXFLAGS) $(SRC) -DWRITE_TEST_DATA -o $@
 
 # Cleanup
 clean:

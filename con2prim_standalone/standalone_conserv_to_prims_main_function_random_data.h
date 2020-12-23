@@ -51,8 +51,21 @@ int *cctkGH;
 
 int main(int argc, const char *argv[]) {
 
-  if( (argc < 2) || (argc > 3) ) {
-    fprintf(stderr,"Error: Correct usage: ./C2P_standalone_random_data number_of_test_points random_seed(optional, default=0)\n");
+#ifdef WRITE_TEST_DATA 
+  int write_data=1;
+  //Select 1 or 0 for variations in the output
+  int write_tmunudn=1;
+  int write_tmunuup=1;
+  int write_bssn=1;
+  int write_metric4dn=1;
+  int write_metric4up=1;
+  //int write_ref_prims=1;
+#else
+  int write_data=0;
+#endif
+  
+  if( (argc < 2+write_data) || (argc > 3+write_data) ) {
+    std::cerr<<"Error: Correct usage: ./C2P_standalone_random_data number_of_test_points"<<(write_data?" output_file_name":"")<<" random_seed(optional, default=0)\n"<<std::endl;
     exit(1);
   }
 
@@ -144,12 +157,32 @@ int main(int argc, const char *argv[]) {
   CCTK_REAL *S_entropy = (CCTK_REAL *)malloc(sizeof(CCTK_REAL)*fullsize);
 #endif
 
+#ifdef WRITE_TEST_DATA
+  //If set up for writing data, set the output file name
+  ofstream outfile;
+  if( write_data ){
+    string outfilename(argv[2]);
+    outfile.open(outfilename);
+  }
+  //Write header line
+  outfile<<"#CONSERVS[5],FLUIDPRIMS[5],ADMMETRIC[10],BFIELD[3]";
+  if( write_tmunudn ) outfile<<",TMNUDN[10]";
+  if( write_tmunuup ) outfile<<",TMNUUP[10]";
+  if( write_bssn ) outfile<<",METRICBSSN[18]";
+  if( write_metric4dn ) outfile<<",METRIC4DN[10]";
+  if( write_metric4up ) outfile<<",METRIC4UP[10]";
+  //if( write_ref_prims ) outfile<<",MODEL_PRIMS[10]";
+  outfile<<endl;
+#endif
+
   // Set the random seed to ensure consistent
   // random number generation between different
   // runs of the code
   int random_seed = 0;
-  if( argc == 3 ) random_seed = atoi(argv[2]);
+  if( argc == 3+write_data ) random_seed = atoi(argv[2+write_data]);
   srand(random_seed);
+
+  
 
   // Set the pertubation. Note that we will perturb
   // the metric quantities by a random value in the
